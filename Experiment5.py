@@ -1,6 +1,7 @@
 import os, sys, json, webbrowser
 import spotipy
 import lyricsgenius
+import pandas as pd
 import spotipy.util as util
 from json.decoder import JSONDecodeError
 
@@ -73,7 +74,7 @@ for recent in recents:
             'tempo' : features['tempo'],
             'time_signature' : features['time_signature'],
             'valence' : features['valence'],
-            '_played at' : recent['played_at'],
+            'played at' : recent['played_at'],
             'lyrical_data' : song.lyrics
         })
     except:
@@ -93,8 +94,10 @@ for recent in recents:
             'tempo' : features['tempo'],
             'time_signature' : features['time_signature'],
             'valence' : features['valence'],
-            '_played at' : recent['played_at'],
+            'played at' : recent['played_at'],
             'lyrical_data' : None
         })
 
-print(json.dumps(songs, sort_keys=True, indent=4))
+df = pd.DataFrame(songs)
+print(df)
+#print(json.dumps(songs, sort_keys=True, indent=4))
