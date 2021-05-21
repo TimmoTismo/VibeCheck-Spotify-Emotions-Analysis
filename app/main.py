@@ -45,7 +45,7 @@ API_BASE = 'https://accounts.spotify.com'
 # Model functions
 def getModelValues():
     # Read data
-    data = pd.read_csv('../datasets/data.csv')
+    data = pd.read_csv('datasets/data.csv')
     
     # Pre-process the data
 
@@ -262,38 +262,36 @@ def api_callback():
 # Spotify returns requested data
 @app.route("/results", methods=['GET', 'POST'])
 def results():
-    try:
-        session['token_info'], authorized = get_token(session)
-        session.modified = True
-        if not authorized:
-            return redirect('/')
-        data = request.form
-        sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
-        results, user_data = predict(sp)
-        r = mode(results)
+    session['token_info'], authorized = get_token(session)
+    session.modified = True
+    if not authorized:
+        return redirect('/')
+    data = request.form
+    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    results, user_data = predict(sp)
+    r = mode(results)
 
-        # Reverses order of index
-        user_data = user_data.iloc[::-1].reset_index()
-        user_data = user_data.drop(columns='index')
-        # print(json.dumps(response))
-        # user_data returns a dataframe
-        valence = user_data['valence'].tolist()
-        energy = user_data['energy'].tolist()
+    # Reverses order of index
+    user_data = user_data.iloc[::-1].reset_index()
+    user_data = user_data.drop(columns='index')
+    # print(json.dumps(response))
+    # user_data returns a dataframe
+    valence = user_data['valence'].tolist()
+    energy = user_data['energy'].tolist()
 
-        distribution = {
-            'Happy' : results.tolist().count('Happy'),
-            'Sad' : results.tolist().count('Sad'),
-            'Calm' : results.tolist().count('Calm'),
-            'Sleepy' : results.tolist().count('Sleepy'),
-            'Energised' : results.tolist().count('Energised'),
-            'Aroused' : results.tolist().count('Aroused'),
-            'Angry' : results.tolist().count('Angry'),
-            'Chill' : results.tolist().count('Chill'),
-        }
+    distribution = {
+        'Happy' : results.tolist().count('Happy'),
+        'Sad' : results.tolist().count('Sad'),
+        'Calm' : results.tolist().count('Calm'),
+        'Sleepy' : results.tolist().count('Sleepy'),
+        'Energised' : results.tolist().count('Energised'),
+        'Aroused' : results.tolist().count('Aroused'),
+        'Angry' : results.tolist().count('Angry'),
+        'Chill' : results.tolist().count('Chill'),
+    }
 
-        return render_template("dashboard.html", data=data, r=r, user_data=user_data, valence=valence, energy=energy, distribution=json.dumps(distribution))
-    except Exception:
-        return redirect(error)
+    return render_template("dashboard.html", data=data, r=r, user_data=user_data, valence=valence, energy=energy, distribution=json.dumps(distribution))
+
 
 @app.route("/logout")
 def logout():
@@ -307,5 +305,3 @@ def logout():
 
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
