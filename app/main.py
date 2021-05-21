@@ -2,10 +2,6 @@
 from flask import Flask, render_template, redirect, request, session, make_response, url_for
 import requests
 
-import urllib
-from urllib.parse import quote 
-
-
 import os, sys, json, webbrowser, pprint, time, secrets
 import spotipy 
 import lyricsgenius
@@ -17,6 +13,8 @@ from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from requests.exceptions import Timeout
 
+from rq import Queue
+from worker import conn
 
 # Importing necessary libraries for model
 from sklearn.metrics import confusion_matrix
@@ -171,7 +169,12 @@ def predict(spotifyObject):
     from sklearn.svm import SVC
     svm_model_linear = SVC(kernel = 'linear', C = 1).fit(X_train, y_train)
 
-    songs = getSongs(spotifyObject)
+    from rq import Queue
+    from worker import conn
+
+    q = Queue(connection=conn)  
+
+    songs = q.enqueue(getSongs, spotifyObject)
 
     user_data = pd.DataFrame(songs)
 
