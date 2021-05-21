@@ -30,6 +30,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 
+nltk.download('vader_lexicon')
 ssk = secrets.token_hex(16)
 app.secret_key = ssk
 
@@ -41,6 +42,8 @@ scope='user-read-recently-played user-top-read user-read-private user-read-email
 show_dialog=True #Has to be true to allow other users to logout
 
 API_BASE = 'https://accounts.spotify.com'
+
+
 
 # Model functions
 def getModelValues():
