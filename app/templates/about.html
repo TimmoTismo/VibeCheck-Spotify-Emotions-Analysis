@@ -1,0 +1,12 @@
+{% extends "index.html" %}
+{% block title %} Home {% endblock %}
+{% block nav %}
+<nav class="nav nav-masthead justify-content-center float-md-end">
+    <a class="nav-link"  href="{{ url_for('home') }}">Home</a>
+    <a class="nav-link active" aria-current="page"href="{{ url_for('about') }}">About</a>
+    <a class="nav-link" href="#">Contact</a>
+  </nav>
+{% endblock %}
+
+{% block content %}
+{% endblock %}

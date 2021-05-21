@@ -1,0 +1,23 @@
+{% extends "index.html" %}
+{% block title %} Home {% endblock %}
+{% block nav %}
+<nav class="nav nav-masthead justify-content-center float-md-end">
+    <a class="nav-link active" aria-current="page" href="{{ url_for('home') }}">Home</a>
+    <!-- <a class="nav-link" href="{{ url_for('about') }}">About</a> -->
+  </nav>
+{% endblock %}
+
+
+{% block content %}
+<h1>See how you're feeling</h1>
+<p class="lead">
+  <em>VibeCheck</em> gives you an insight into what emotions are conveyed from
+   your recently played Spotify songs and predicts your current mood. 
+  <br>(A dissertation project by <b>Timothy Tismo-Capili</b>)
+</p>
+<p class="lead">
+    <a href="login" class="btn btn-lg btn-secondary fw-bold border-white">Login to Spotify       
+      <img width='25' height='25' src="https://img.icons8.com/metro/26/000000/spotify.png">
+    </a>
+</p>
+{% endblock %}

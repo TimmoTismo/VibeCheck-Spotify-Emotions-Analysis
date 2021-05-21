@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Hugo 0.82.0">
+    <title>Dashboard Template · Bootstrap v5.0</title>
+
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/dashboard/">
+
+    <script type=text/javascript>
+      var val = {{ valence|tojson }};
+      var energy = {{ energy|tojson }};
+      
+      var distribution = JSON.parse('{{distribution|safe}}');
+ 
+    </script>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bootstrap.min.css') }}" >  
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
+ 
+    
+    <!-- Custom styles for this template -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dashboard.css') }}" >  
+  </head>
+  <body>
+    
+    <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand me-0 px-3" href="#">VibeCheck</a>
+      <!-- <h3 class="float-md-start mb-0">VibeCheck</h3> -->
+      <!-- <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button> -->
+
+      <ul class="navbar-nav px-3">
+        <li class="nav-item text-nowrap">
+          <!-- <a href="logout" class="btn btn-lg btn-secondary fw-bold border-white">Logout</a> -->
+          <a class="nav-link" href="logout">Logout</a>
+        </li>
+      </ul>
+    </header>
+
+
+    <div class="container-fluid">
+      <div class="row">
+
+        <main>          
+          <div class="mt-3 border-bottom">
+            <h1 class="h2">Results</h1>
+          </div>
+
+          <div class='results'>
+            <p>Your recent music suggests that you are feeling</p>
+            <h3>{{r}}</h3>
+          </div>
+
+
+
+          <div class="border-bottom">
+          </div>
+
+          <div class='bg-light mb-3 pb-3'>
+            <canvas class="my-4 w-100 mb-3" id="doughnutChart" width="auto" height="auto"></canvas>
+          </div>
+
+          <div class='bg-light mb-3'>
+            <canvas class="my-4 w-100 mb-3" id="valenceChart" width="900" height="380"></canvas>
+          </div>
+
+          <div class='bg-light mb-3'>
+            <canvas class="my-4 w-100 mb-3" id="energyChart" width="900" height="380"></canvas>
+          </div>
+
+          <div class='bg-light mb-3'>
+            <canvas class="my-4 w-100 mb-3" id="scatterChart" width="auto" height="auto"></canvas>
+          </div>
+
+          <div class="mt-5 mb-3 border-bottom">
+            <h4>Recently Played</h4>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-dark table-striped">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Song</th>
+                  <th>Artist(s)</th>
+                  <th>Time</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for index, row in user_data.iterrows() %}
+                  <tr>
+                    <td>{{index}}</td>
+                    <td>{{row['name']}}</td>
+                    <td>{{', '.join(row['artists'])}}</td>
+                    <td>{{row['datetime'][0]}}</td>
+                    <td>{{row['datetime'][1]}}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script type="text/javascript" src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}" ></script>  
+
+    
+    <!-- <script src="dashboard.js"></script>
+    <script src="../assets/dist/js/bootstrap.bundle.min.js"></script> -->
+  
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js" integrity="sha384-uO3SXW5IuS1ZpFPKugNNWqTZRRglnUJK6UAZ/gxOX80nxEkN9NcGZTftn6RzhGWE" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js" integrity="sha384-zNy6FEbO50N+Cg5wap8IKA4M/ZnLJgzc6w2NqACZaK0u0FXfOWRRJOnQtpZun8ha" crossorigin="anonymous"></script>
+    <!-- <script type="text/javascript" src="{{ url_for('static', filename='dashboard.js') }}" ></script>   -->
+
+    <script>
+      /* globals Chart:false, feather:false */
+
+      (function () {
+        'use strict'
+
+        feather.replace()
+        var num = Array.from(Array(50).keys());
+
+        // Graphs
+        var ch_valence = document.getElementById('valenceChart')
+        var ch_energy = document.getElementById('energyChart')
+        var scatter = document.getElementById('scatterChart')
+        var doughnut = document.getElementById('doughnutChart')
+
+        // eslint-disable-next-line no-unused-vars
+        var valenceChart = new Chart(ch_valence, {
+          type: 'line',
+          data: {
+            labels: num,
+            // labels: "{{user_data['played_at'].tolist()}}",
+            datasets: [{
+              data: val,
+              label: 'Valence',
+              lineTension: 0,
+              backgroundColor: 'transparent',
+              borderColor: '#007bff',
+              borderWidth: 4,
+              pointBackgroundColor: '#007bff'
+            }]
+          },
+          options: {
+            scales: {
+              yAxes: [{
+                ticks: {
+                  beginAtZero: false
+                },
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Valence',
+                  padding: 10
+                }
+              }],
+              xAxes : [{
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Songs',
+                  padding: 10
+                }
+              }]
+            },
+            legend: {
+              display: true
+            },
+            title: {
+              display: true,
+              text: 'Valence Over Time'
+            }
+          }
+        })
+
+        var energyChart = new Chart(ch_energy, {
+          type: 'line',
+          data: {
+            labels: num,
+            // labels: "{{user_data['played_at'].tolist()}}",
+            datasets: [{
+              data: energy,
+              label: 'Energy',
+              lineTension: 0,
+              backgroundColor: 'transparent',
+              borderColor: '#1DB954',
+              borderWidth: 4,
+              pointBackgroundColor: '#1DB954'
+            }]
+          },
+          options: {
+            scales: {
+              yAxes: [{
+                ticks: {
+                  beginAtZero: false
+                },
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Energy',
+                  padding: 10
+                }
+                
+              }],
+              xAxes : [{
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Songs',
+                  padding: 10
+                }
+              }]
+            },
+            legend: {
+              display: true
+            },
+            title: {
+              display: true,
+              text: 'Energy Over Time'
+            }
+
+          }
+        })
+
+        let coords = val.map( (v,i) => ({ x: v, y: energy[i] }) )
+        var scatterChart = new Chart(scatter, {
+          type: 'scatter',
+          data: {
+            datasets: [{
+            pointRadius: 4,
+            pointBackgroundColor: "rgba(0,0,255,1)",
+            data: coords
+            }]
+          },
+          options: {
+            title: {
+              display: true,
+              text: "Valence Energy Chart"
+            },
+            legend: {
+                display: false
+              },
+            scales: {
+              xAxes : [{
+                display: true,
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Energy',
+                  padding: 10
+                }
+              }],
+              yAxes : [{
+                display: true,
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Valence',
+                  padding: 10
+
+                }
+              }]
+            }
+          }
+        })
+
+        var barColors = [
+          "#FFFF2E", //yellow
+          "#00008b", //blue
+          "#a32cc4", //purple
+          "#737373", //grey
+          "#1DB954", //green
+          "#f25278", //pink
+          "#e60026", //red
+          "#007fff", //lightblue
+        ];
+        //change x and y values
+        var doughnutChart = new Chart(doughnut, {
+          type: "doughnut",
+          data: {
+            labels: ['Happy', 'Sad', 'Calm', 'Sleepy', 'Energised', 'Aroused', 'Angry', 'Chill'],
+            datasets: [{
+              backgroundColor: barColors,
+              data: [distribution.Happy, 
+                distribution.Sad, 
+                distribution.Calm, 
+                distribution.Sleepy, 
+                distribution.Energised, 
+                distribution.Aroused, 
+                distribution.Angry, 
+                distribution.Chill]
+            }]
+          },
+          options: {
+            title: {
+              display: true,
+              text: "Mood Distribution"
+            }
+          }
+        })
+
+      })()
+
+
+
+    </script>
+  </body>
+</html>
