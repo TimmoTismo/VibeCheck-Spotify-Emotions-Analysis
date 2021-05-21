@@ -35,7 +35,7 @@ app.secret_key = ssk
 
 client_id = 'd576e9eb16044adbaa2d22688fc73dd0'
 client_secret = '7b5cc4d0a7ce40ee9f8c0ea42aba241b'
-redirect_uri = 'http://127.0.0.1:5000/api_callback'
+redirect_uri = 'https://vibecheck1.herokuapp.com/api_callback'
 scope='user-read-recently-played user-top-read user-read-private user-read-email'
 
 show_dialog=True #Has to be true to allow other users to logout
