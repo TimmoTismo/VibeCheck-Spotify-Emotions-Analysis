@@ -1,5 +1,5 @@
 #from flask import Flask, render_template, redirect, url_for
-from flask import Flask, render_template, redirect, request, session, make_response, url_for
+from flask import Flask, render_template, redirect, request, session, make_response, url_for, render_template_string
 import requests
 
 import os, sys, json, webbrowser, pprint, time, secrets
@@ -13,8 +13,10 @@ from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from requests.exceptions import Timeout
 
-# from rq import Queue
-# from worker import conn
+from rq import Queue
+from rq.job import Job
+from redis import Redis
+from worker import conn
 
 # Importing necessary libraries for model
 from sklearn.metrics import confusion_matrix
@@ -34,8 +36,8 @@ app.secret_key = ssk
 
 client_id = 'd576e9eb16044adbaa2d22688fc73dd0'
 client_secret = '7b5cc4d0a7ce40ee9f8c0ea42aba241b'
-redirect_uri = 'https://vibecheck1.herokuapp.com/api_callback'
-# redirect_uri = 'http://127.0.0.1:5000/api_callback'
+# redirect_uri = 'https://vibecheck1.herokuapp.com/api_callback'
+redirect_uri = 'http://127.0.0.1:5000/api_callback'
 scope='user-read-recently-played user-top-read user-read-private user-read-email'
 
 show_dialog=True #Has to be true to allow other users to logout
@@ -269,6 +271,10 @@ def api_callback():
 
     return redirect("results")
 
+
+# r = Redis(host='redis://localhost:6379')
+q = Queue(connection=conn)
+
 # authorization-code-flow Step 3.
 # Use the access token to access the Spotify Web API;
 # Spotify returns requested data
@@ -280,7 +286,14 @@ def results():
         return redirect('/')
     data = request.form
     sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
-    results, user_data = predict(sp)
+    
+    return redirect(url_for('process', data=sp))
+
+    #return render_template("dashboard.html", data=data, r=r, user_data=user_data, valence=valence, energy=energy, distribution=json.dumps(distribution))
+
+def slow_func(data):
+    sleep(5)
+    results, user_data = predict(data)
     r = mode(results)
 
     # Reverses order of index
@@ -301,8 +314,37 @@ def results():
         'Angry' : results.tolist().count('Angry'),
         'Chill' : results.tolist().count('Chill'),
     }
-
+    
     return render_template("dashboard.html", data=data, r=r, user_data=user_data, valence=valence, energy=energy, distribution=json.dumps(distribution))
+
+
+def get_template(data, refresh=False):
+    template_str='''<html>
+    <head>
+      {% if refresh %}
+        <meta http-equiv="refresh" content="5">
+      {% endif %}
+    </head>
+    <body>{{result}}</body>
+    </html>'''
+    return render_template_string(template_str, result=data, refresh=refresh)
+
+@app.route('/process/<data>')
+def process(data):
+    job = q.enqueue(slow_func, data)
+    return redirect(url_for('result', id=job.id))
+
+
+@app.route('/result/<string:id>')
+def result(id):
+    job = Job.fetch(id, connection=conn)
+    status = job.get_status()
+    if status in ['queued', 'started', 'deferred', 'failed']:
+        return get_template(status, refresh=True)
+    elif status == 'finished':
+        result = job.result 
+        # If this is a string, we can simply return it:
+        return get_template(result)
 
 
 @app.route("/logout")
