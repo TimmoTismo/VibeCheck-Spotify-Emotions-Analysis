@@ -13,8 +13,8 @@ from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from requests.exceptions import Timeout
 
-from rq import Queue
-from worker import conn
+# from rq import Queue
+# from worker import conn
 
 # Importing necessary libraries for model
 from sklearn.metrics import confusion_matrix
@@ -34,7 +34,8 @@ app.secret_key = ssk
 
 client_id = 'd576e9eb16044adbaa2d22688fc73dd0'
 client_secret = '7b5cc4d0a7ce40ee9f8c0ea42aba241b'
-redirect_uri = 'https://vibecheck1.herokuapp.com/api_callback'
+# redirect_uri = 'https://vibecheck1.herokuapp.com/api_callback'
+redirect_uri = 'http://127.0.0.1:5000/api_callback'
 scope='user-read-recently-played user-top-read user-read-private user-read-email'
 
 show_dialog=True #Has to be true to allow other users to logout
@@ -92,78 +93,75 @@ def getSongs(spotifyObject):
 
     songs = []
     #x is items
-    def generate():
-        for x in recents:
-            track_id = x['track']['id']
-            track_name = x['track']['name']
-            track_artists = x['track']['artists']
-            
-            annotation = None
-            lyric_score = None
-            annotation_score = None
-            
-            features = spotifyObject.audio_features(track_id)[0]
+    for x in recents:
+        track_id = x['track']['id']
+        track_name = x['track']['name']
+        track_artists = x['track']['artists']
+        
+        annotation = None
+        lyric_score = None
+        annotation_score = None
+        
+        features = spotifyObject.audio_features(track_id)[0]
 
-            # Uncomment this section to use nlp =================================
-            # retries = 0
-            # while retries < 3:
-            #     try:
-            #         song = geniusObject.search_song(title=track_name, artist=track_artists[0]['name'])
-            #     except Timeout as e:
-            #         retries += 1
-            #         continue            
-            #     break
-
-
-            # try:
-            #     annotation = geniusObject.song_annotations(song.id)
-            #     lyric_score = analyser.polarity_scores(song.to_text())
-            #     annotation_score = analyser.polarity_scores(song.to_text())
-            # except Exception as e:
-            #     print('############################')
-            #     print(e)
-            #     print('Error 1 For', track_name)
-            #     print('############################')
-            #=================================================================
-
+        # Uncomment this section to use nlp =================================
+        retries = 0
+        while retries < 3:
             try:
-                songs.append({
-                # Spotify features
-                'name' : track_name,
-                'artists' : [d['name'] for d in track_artists],
-                'acousticness' : features['acousticness'],
-                'danceability' : features['danceability'],
-                'duration_ms' : features['duration_ms'],
-                'energy' : features['energy'],
-                'instrumentalness' : features['instrumentalness'],
-                'key' : features['key'],
-                'liveness' : features['liveness'],
-                'loudness' : features['loudness'],
-                'mode' : features['mode'],
-                'speechiness' : features['speechiness'],
-                'tempo' : features['tempo'],
-                'time_signature' : features['time_signature'],
-                'valence' : features['valence'],
-                'played_at' : x['played_at'],
-                'datetime' : convertDateTime(x['played_at']),
+                song = geniusObject.search_song(title=track_name, artist=track_artists[0]['name'])
+            except Timeout as e:
+                retries += 1
+                continue            
+            break
 
-                # Genius features
-                # 'lyrics' : song.lyrics if song else None,
-                # 'annotations' : annotation if annotation else None,
 
-                # Uncomment these to use nlp
-                # 'nlp_lyrics' : lyric_score['compound'] if lyric_score else None,
-                # 'nlp_annotations' : annotation_score['compound'] if annotation_score else None,
-                # 'valence+nlp' : round(features['valence']+(lyric_score['compound']+annotation_score['compound'])/100, 4) if song else features['valence']
-                })
-            except Exception as e:
-                print('############################')
-                print(e)
-                print('Error 2 For', track_name)
-                print('############################')
+        try:
+            annotation = geniusObject.song_annotations(song.id)
+            lyric_score = analyser.polarity_scores(song.to_text())
+            annotation_score = analyser.polarity_scores(song.to_text())
+        except Exception as e:
+            print('############################')
+            print(e)
+            print('Error 1 For', track_name)
+            print('############################')
+        #=================================================================
+
+        try:
+            songs.append({
+            # Spotify features
+            'name' : track_name,
+            'artists' : [d['name'] for d in track_artists],
+            'acousticness' : features['acousticness'],
+            'danceability' : features['danceability'],
+            'duration_ms' : features['duration_ms'],
+            'energy' : features['energy'],
+            'instrumentalness' : features['instrumentalness'],
+            'key' : features['key'],
+            'liveness' : features['liveness'],
+            'loudness' : features['loudness'],
+            'mode' : features['mode'],
+            'speechiness' : features['speechiness'],
+            'tempo' : features['tempo'],
+            'time_signature' : features['time_signature'],
+            'valence' : features['valence'],
+            'played_at' : x['played_at'],
+            'datetime' : convertDateTime(x['played_at']),
+
+            # Genius features
+            # 'lyrics' : song.lyrics if song else None,
+            # 'annotations' : annotation if annotation else None,
+
+            # Uncomment these to use nlp
+            'nlp_lyrics' : lyric_score['compound'] if lyric_score else None,
+            'nlp_annotations' : annotation_score['compound'] if annotation_score else None,
+            'valence+nlp' : round(features['valence']+(lyric_score['compound']+annotation_score['compound'])/100, 4) if song else features['valence']
+            })
+        except Exception as e:
+            print('############################')
+            print(e)
+            print('Error 2 For', track_name)
+            print('############################')
             
-
-
     return songs
 
 def predict(spotifyObject):
@@ -184,12 +182,12 @@ def predict(spotifyObject):
     user_data = pd.DataFrame(songs)
 
     # Drop unnecessary columns
-    # user = user_data.drop(columns=['duration_ms','played_at', 'datetime', 'nlp_lyrics', 'nlp_annotations'])
-    # X_test = user.iloc[:, 2:15]
+    user = user_data.drop(columns=['duration_ms','played_at', 'datetime', 'nlp_lyrics', 'nlp_annotations'])
+    X_test = user.iloc[:, 2:15]
     
     # w/o nlp
-    user = user_data.drop(columns=['duration_ms','played_at', 'datetime'])
-    X_test = user.iloc[:, 2:13]
+    # user = user_data.drop(columns=['duration_ms','played_at', 'datetime'])
+    # X_test = user.iloc[:, 2:13]
 
     # Predict
     svm_predictions = svm_model_linear.predict(X_test)
