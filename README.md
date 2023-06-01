@@ -1,7 +1,7 @@
 # VibeCheck-Spotify-Emotions-Analysis
 
 ## About
-VibeCheck is a Spotify Emotions Analysis web application that extracts insights from the user's listening habits and uses machine learning to classify their current mood. It also provides clean and informative graphs for the user to analyse and interpret. \
+VibeCheck is an emotions analysis web application that extracts insights from the user's listening habits on Spotify and uses machine learning to classify their current mood. It also provides clean and informative graphs for the user to analyse and interpret. \
 \
 This project aims to explore the application of machine learning techniques in predicting the emotions conveyed from music. Emotion analysis is a complex task, both for humans and machines, as emotions can be subjective and multifaceted. By focusing on music, which is known to evoke various emotions in listeners, we aim to develop a model that accurately predicts the emotions conveyed in a song. 
 ## Screenshots
