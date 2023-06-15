@@ -17,6 +17,12 @@ body {
   vertical-align: text-bottom;
 }
 
+.bg-light, .table-responsive{
+  margin: 40px;
+  padding: 20px;
+}
+
+
 /*
  * Sidebar
  */

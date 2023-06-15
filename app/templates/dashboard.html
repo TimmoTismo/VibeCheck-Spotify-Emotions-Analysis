@@ -106,6 +106,7 @@
                   <th>Artist(s)</th>
                   <th>Time</th>
                   <th>Date</th>
+                  <th>Predicted Mood</th>
                 </tr>
               </thead>
               <tbody>
@@ -114,8 +115,9 @@
                     <td>{{index}}</td>
                     <td>{{row['name']}}</td>
                     <td>{{', '.join(row['artists'])}}</td>
-                    <td>{{row['datetime'][0]}}</td>
-                    <td>{{row['datetime'][1]}}</td>
+                    <td>{{row['datetime'][0][0]}}</td>
+                    <td>{{row['datetime'][0][1]}}</td>
+                    <td>{{row['predicted mood']}}</td>
                   </tr>
                 {% endfor %}
               </tbody>
@@ -155,7 +157,6 @@
           type: 'line',
           data: {
             labels: num,
-            // labels: "{{user_data['played_at'].tolist()}}",
             datasets: [{
               data: val,
               label: 'Valence',
@@ -200,7 +201,6 @@
           type: 'line',
           data: {
             labels: num,
-            // labels: "{{user_data['played_at'].tolist()}}",
             datasets: [{
               data: energy,
               label: 'Energy',
