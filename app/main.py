@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, session, make_response, url_for, render_template_string
+from flask import Flask, render_template, redirect, request, session
 import spotipy 
 import os, json, secrets, time
 
@@ -79,7 +79,14 @@ def api_callback():
     # Saving the access token along with all other token related info
     session["token_info"] = token_info
 
-    return redirect("results")
+    #return redirect("results")
+    return redirect('loading')
+
+@app.route("/loading")
+def loading():
+    return render_template("loading.html")
+
+
 
 # authorization-code-flow Step 3.
 # Use the access token to access the Spotify Web API;
@@ -121,6 +128,19 @@ def results():
     return render_template("dashboard.html", data=sp, r=r, user_data=user_data, valence=valence, energy=energy, distribution=json.dumps(distribution))
 
 
+@app.route("/logout")
+def logout():
+    try:    
+        # Remove the CACHE file (.cache-test) so that a new user can login.
+        os.remove('.cache')
+        session.clear()
+    except:
+        pass
+    return redirect('home')
+
+
+
+
 # Checks to see if token is valid and gets a new token if not
 def get_token(session):
     token_valid = False
@@ -143,6 +163,9 @@ def get_token(session):
 
     token_valid = True
     return token_info, token_valid
+
+
+
 
 # Model functions
 def getModelValues():

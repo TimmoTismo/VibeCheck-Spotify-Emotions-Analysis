@@ -32,6 +32,7 @@ body{
     background-position: center;
     text-shadow: 0 .05rem .1rem rgba(0, 0, 0, .5);
     box-shadow: inset -300px 0px 100px -90px  rgba(0, 0, 0, .7), inset 300px 0px 100px -90px  rgba(0, 0, 0, .7);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
   
 /*
