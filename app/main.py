@@ -16,7 +16,8 @@ app.secret_key = ssk
 # Spotify Constants
 CLIENT_ID = 'd576e9eb16044adbaa2d22688fc73dd0'
 CLIENT_SECRET = '7b5cc4d0a7ce40ee9f8c0ea42aba241b'
-REDIRECT_URI = 'http://127.0.0.1:5000/api_callback'
+# REDIRECT_URI = 'http://127.0.0.1:5000/api_callback' ## For Flask development server
+REDIRECT_URI = 'https://vibecheck-nnrj.onrender.com/api_callback' ## For Render
 SCOPE='user-read-recently-played user-top-read user-read-private user-read-email'
 SHOW_DIALOG=True # Has to be true to allow other users to logout
 
