@@ -13,14 +13,22 @@ app = Flask(__name__)
 ssk = secrets.token_hex(16)
 app.secret_key = ssk
 
-# Spotify constants
-client_id = 'd576e9eb16044adbaa2d22688fc73dd0'
-client_secret = '7b5cc4d0a7ce40ee9f8c0ea42aba241b'
-redirect_uri = 'http://127.0.0.1:5000/api_callback'
-scope='user-read-recently-played user-top-read user-read-private user-read-email'
-show_dialog=True # Has to be true to allow other users to logout
+# Spotify Constants
+CLIENT_ID = 'd576e9eb16044adbaa2d22688fc73dd0'
+CLIENT_SECRET = '7b5cc4d0a7ce40ee9f8c0ea42aba241b'
+REDIRECT_URI = 'http://127.0.0.1:5000/api_callback'
+SCOPE='user-read-recently-played user-top-read user-read-private user-read-email'
+SHOW_DIALOG=True # Has to be true to allow other users to logout
 
 API_BASE = 'https://accounts.spotify.com'
+
+
+# Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
+SP_OAUTH = spotipy.oauth2.SpotifyOAuth(client_id = CLIENT_ID, 
+                                        client_secret = CLIENT_SECRET, 
+                                        redirect_uri = REDIRECT_URI, 
+                                        scope = SCOPE, 
+                                        show_dialog=SHOW_DIALOG)
 
 
 @app.route('/')
@@ -40,7 +48,7 @@ def error():
     return render_template('error.html')
 
 
-
+# Source: https://stackoverflow.com/questions/57580411/storing-spotify-token-in-flask-session-using-spotipy
 # authorization-code-flow Step 1. Have your application request authorization; 
 # the user logs in and authorizes access
 @app.route("/login")
@@ -52,15 +60,11 @@ def login():
     except:
         pass
 
-    # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-    sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id = client_id, 
-                                           client_secret = client_secret, 
-                                           redirect_uri = redirect_uri, 
-                                           scope = scope, 
-                                           show_dialog=show_dialog)
-    auth_url = sp_oauth.get_authorize_url()
-    print(auth_url)
+    # Get User Authorisation URL for this app
+    auth_url = SP_OAUTH.get_authorize_url()
+    #print('auth_url: ',auth_url)
 
+    # Send user to Spotify authorisation page
     return redirect(auth_url)
 
 
@@ -70,16 +74,23 @@ def login():
 # Spotify returns access and refresh tokens
 @app.route("/api_callback")
 def api_callback():
-    # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-    sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id = client_id, client_secret = client_secret, redirect_uri = redirect_uri, scope = scope, show_dialog=show_dialog)
+    # Not sure if this is needed
     session.clear()
+
+    # Retrieve response code from URL
     code = request.args.get('code')
-    token_info = sp_oauth.get_access_token(code)
+    # print('code: ', code)
+
+    # If user clicks 'Cancel'
+    if not code:
+        return redirect('home')
+
+    # Add access token to sessions
+    token_info = SP_OAUTH.get_access_token(code)
 
     # Saving the access token along with all other token related info
     session["token_info"] = token_info
 
-    #return redirect("results")
     return redirect('loading')
 
 @app.route("/loading")
@@ -95,12 +106,13 @@ def loading():
 def results():
     session['token_info'], authorized = get_token(session)
     session.modified = True
+
     if not authorized:
-        return redirect('/')
-    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+        return redirect('/home')
     
-    results, user_data = predict(sp)
-    r = mode(results)
+    # Call model to predict on user's data
+    results, user_data = predict()
+    user_mood = mode(results)
 
     # Reverses order of index
     user_data = user_data.iloc[::-1].reset_index()
@@ -112,6 +124,7 @@ def results():
     valence = user_data['valence'].tolist()
     energy = user_data['energy'].tolist()
 
+    # Counting
     distribution = {
         'Happy' : results.tolist().count('Happy'),
         'Sad' : results.tolist().count('Sad'),
@@ -126,7 +139,7 @@ def results():
     # Appending results to user_data dataframe
     user_data['predicted mood'] = results
 
-    return render_template("dashboard.html", data=sp, r=r, user_data=user_data, valence=valence, energy=energy, distribution=json.dumps(distribution))
+    return render_template("dashboard.html", user_mood=user_mood, user_data=user_data, valence=valence, energy=energy, distribution=json.dumps(distribution))
 
 
 @app.route("/logout")
@@ -159,7 +172,7 @@ def get_token(session):
     # Refreshing token if it has expired
     if (is_token_expired):
         # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-        sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id = client_id, client_secret = client_secret, redirect_uri = redirect_uri, scope = scope, show_dialog=show_dialog)
+        sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id = CLIENT_ID, client_secret = CLIENT_SECRET, redirect_uri = REDIRECT_URI, scope = SCOPE, show_dialog=SHOW_DIALOG)
         token_info = sp_oauth.refresh_access_token(session.get('token_info').get('refresh_token'))
 
     token_valid = True
@@ -216,9 +229,11 @@ def getSongDict(x, spotifyObject):
 
     return songDict
 
-def getUserSongs(spotifyObject):
+def getUserSongs():
     # Get user data from Spotify as the X_test variable
-    results = spotifyObject.current_user_recently_played(limit=50, after=None, before=None) #This line opens up a page in the browser
+    # Initiliase Spotify object for the retrieval of user data
+    spotifyObject = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    results = spotifyObject.current_user_recently_played(limit=50, after=None, before=None)
 
     recents = results['items']
     while results['next']:
@@ -228,14 +243,14 @@ def getUserSongs(spotifyObject):
     return [getSongDict(x, spotifyObject) for x in recents]
 
 
-def predict(spotifyObject):
+def predict():
     X_train, y_train = getModelValues()
 
     # Training a linear SVM classifier
     from sklearn.svm import SVC
     svm_model_linear = SVC(kernel = 'linear', C = 1).fit(X_train, y_train)
 
-    songs = getUserSongs(spotifyObject)
+    songs = getUserSongs()
 
     user_data = pd.DataFrame(songs)
 
