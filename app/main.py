@@ -108,6 +108,7 @@ def results():
     # print(json.dumps(response))
     # user_data returns a dataframe
 
+    ## Rework this to add more graphs
     valence = user_data['valence'].tolist()
     energy = user_data['energy'].tolist()
 
