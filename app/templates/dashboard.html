@@ -6,7 +6,7 @@
     <meta name="description" content="">
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Hugo 0.82.0">
-    <title>Dashboard Template · Bootstrap v5.0</title>
+    <title>Dashboard</title>
 
     <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/dashboard/">
 
@@ -44,7 +44,7 @@
   <body>
     
     <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand me-0 px-3" href="#">VibeCheck</a>
+      <a class="navbar-brand me-0 px-3" href="/">VibeCheck</a>
       <!-- <h3 class="float-md-start mb-0">VibeCheck</h3> -->
       <!-- <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -69,7 +69,7 @@
 
           <div class='results'>
             <p>Your recent music suggests that you are feeling</p>
-            <h3>{{r}}</h3>
+            <h3>{{user_mood}}</h3>
           </div>
 
 
@@ -106,6 +106,7 @@
                   <th>Artist(s)</th>
                   <th>Time</th>
                   <th>Date</th>
+                  <th>Predicted Mood</th>
                 </tr>
               </thead>
               <tbody>
@@ -114,8 +115,9 @@
                     <td>{{index}}</td>
                     <td>{{row['name']}}</td>
                     <td>{{', '.join(row['artists'])}}</td>
-                    <td>{{row['datetime'][0]}}</td>
-                    <td>{{row['datetime'][1]}}</td>
+                    <td>{{row['datetime'][0][0]}}</td>
+                    <td>{{row['datetime'][0][1]}}</td>
+                    <td>{{row['predicted mood']}}</td>
                   </tr>
                 {% endfor %}
               </tbody>
@@ -155,7 +157,6 @@
           type: 'line',
           data: {
             labels: num,
-            // labels: "{{user_data['played_at'].tolist()}}",
             datasets: [{
               data: val,
               label: 'Valence',
@@ -200,7 +201,6 @@
           type: 'line',
           data: {
             labels: num,
-            // labels: "{{user_data['played_at'].tolist()}}",
             datasets: [{
               data: energy,
               label: 'Energy',
