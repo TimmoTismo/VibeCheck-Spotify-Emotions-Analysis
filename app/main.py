@@ -15,14 +15,11 @@ app.secret_key = ssk
 
 # Spotify Constants
 CLIENT_ID = 'd576e9eb16044adbaa2d22688fc73dd0'
-CLIENT_SECRET = '7b5cc4d0a7ce40ee9f8c0ea42aba241b'
+CLIENT_SECRET = '7b5cc4d0a7ce40ee9f8c0ea42aba241b' # REWORK: Hide this
 # REDIRECT_URI = 'http://127.0.0.1:5000/api_callback' ## For Flask development server
 REDIRECT_URI = 'https://vibecheck-nnrj.onrender.com/api_callback' ## For Render
 SCOPE='user-read-recently-played user-top-read user-read-private user-read-email'
 SHOW_DIALOG=True # Has to be true to allow other users to logout
-
-API_BASE = 'https://accounts.spotify.com'
-
 
 # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
 SP_OAUTH = spotipy.oauth2.SpotifyOAuth(client_id = CLIENT_ID, 
@@ -92,6 +89,7 @@ def api_callback():
     # Saving the access token along with all other token related info
     session["token_info"] = token_info
 
+    # Send user to loading page
     return redirect('loading')
 
 @app.route("/loading")
@@ -121,7 +119,7 @@ def results():
     # print(json.dumps(response))
     # user_data returns a dataframe
 
-    ## Rework this to add more graphs
+    ## REWORk: Add more graphs
     valence = user_data['valence'].tolist()
     energy = user_data['energy'].tolist()
 
@@ -183,6 +181,7 @@ def get_token(session):
 
 
 # Model functions
+# REWORK: Stop training model within app, instea load/save model
 def getModelValues():
     # Read data
     data = pd.read_csv('datasets/data.csv')
@@ -203,12 +202,13 @@ def getModelValues():
 
     return X_train, y_train
 
+# Convert time played into date and time formats
 def convertDateTime(timestamp):
     date = timestamp[0:10]
     time = timestamp[11:16]
     return time, date
 
-
+# Return song as a dictionary
 def getSongDict(x, spotifyObject):
     # Get song id, name and artist(s)
     track_id = x['track']['id']
@@ -230,8 +230,8 @@ def getSongDict(x, spotifyObject):
 
     return songDict
 
+ # Get user data from Spotify for model predictions
 def getUserSongs():
-    # Get user data from Spotify as the X_test variable
     # Initiliase Spotify object for the retrieval of user data
     spotifyObject = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
     results = spotifyObject.current_user_recently_played(limit=50, after=None, before=None)
@@ -243,16 +243,19 @@ def getUserSongs():
 
     return [getSongDict(x, spotifyObject) for x in recents]
 
-
+# Retrieve model predictions
 def predict():
+    # REWORK: Remove the need to call this function
     X_train, y_train = getModelValues()
 
     # Training a linear SVM classifier
     from sklearn.svm import SVC
     svm_model_linear = SVC(kernel = 'linear', C = 1).fit(X_train, y_train)
 
+    # Getting songs from user
     songs = getUserSongs()
 
+    # Storing data in dataframe
     user_data = pd.DataFrame(songs)
 
     # Drop unnecessary columns
