@@ -12,7 +12,7 @@ Try it out here: https://vibecheck-nnrj.onrender.com/home
 ## Screenshots
 ![image](https://github.com/TimmoTismo/VibeCheck-Spotify-Mood-Analysis/assets/44039129/02df7f4a-fa73-448c-aac0-bc50c6a70f14)
 
-![image](https://github.com/TimmoTismo/VibeCheck-Spotify-Mood-Analysis/assets/44039129/b004bf6f-3ff4-4bac-a3d3-dd83584ec893)
+![image](https://github.com/TimmoTismo/VibeCheck-Spotify-Emotions-Analysis/assets/44039129/db27b93a-b86c-4fcd-9a92-c38ae354d769)
 
 ![image](https://github.com/TimmoTismo/VibeCheck-Spotify-Mood-Analysis/assets/44039129/19f88aff-7cb4-4a25-a8ad-8e7aba9bcf25)
 
