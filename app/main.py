@@ -121,6 +121,8 @@ def results():
     
     # Call model to predict on user's data
     results, user_data = predict()
+    
+    # Calculate user's most prevalent mood
     user_mood = mode(results)
 
     # Reverses order of index
@@ -129,7 +131,7 @@ def results():
     # print(json.dumps(response))
     # user_data returns a dataframe
 
-    ## REWORk: Add more graphs
+    ## REWORK: Add more graphs
     valence = user_data['valence'].tolist()
     energy = user_data['energy'].tolist()
 
@@ -162,7 +164,7 @@ def logout():
     return redirect('home')
 
 
-
+# Returns redirect URI depending on root URL
 def getRedirectURI():
     return request.url_root + 'api_callback'
 
@@ -200,7 +202,7 @@ def get_token(session):
 
 # Model functions
 # REWORK: Stop training model within app, instea load/save model
-def getModelValues():
+def get_model_values():
     # Read data
     data = pd.read_csv('datasets/data.csv')
     
@@ -210,68 +212,76 @@ def getModelValues():
     data = data.loc[:, ~data.columns.str.contains('^Unnamed')] 
 
     # Drop unnecessary columns
+    # Note: Dropping NLP related columns
     df = data.drop(columns=['duration_ms', 'nlp_lyrics', 'nlp_annotations', 'time_signature', 'valence+nlp'])
 
     # Randomise rows
     df = df.sample(frac=1).reset_index(drop=True)
 
-    X_train = df.iloc[:, 2:13] # All rows, features only, no labels
-    y_train = df.iloc[:, 13] # All rows, label only, no features
+    # All rows, features only, no labels
+    X_train = df.iloc[:, 2:13]
+    
+    # All rows, labels only, no features 
+    y_train = df.iloc[:, 13] 
 
     return X_train, y_train
 
 # Convert time played into date and time formats
-def convertDateTime(timestamp):
+def convert_date_time(timestamp):
     date = timestamp[0:10]
     time = timestamp[11:16]
     return time, date
 
 # Return song as a dictionary
-def getSongDict(x, spotifyObject):
+def get_song_dict(x, spotify_object):
     # Get song id, name and artist(s)
     track_id = x['track']['id']
     track_name = x['track']['name']
     track_artists = x['track']['artists']
 
     # Get features
-    features = spotifyObject.audio_features(track_id)[0]
+    features = spotify_object.audio_features(track_id)[0]
 
     # Create song dictionary
-    songDict = {'name' : track_name, 'artists' : [d['name'] for d in track_artists]}
+    song_dict = {'name' : track_name, 'artists' : [d['name'] for d in track_artists]}
 
     # Find time song was played for chonological ordering
-    songDict['datetime'] = convertDateTime(x['played_at']),
+    song_dict['datetime'] = convert_date_time(x['played_at']),
 
     # Add song features to dictionary
     for feat in features.keys():
-        songDict[feat] = features[feat]
+        song_dict[feat] = features[feat]
 
-    return songDict
+    return song_dict
 
  # Get user data from Spotify for model predictions
-def getUserSongs():
+def get_user_songs():
     # Initiliase Spotify object for the retrieval of user data
     spotifyObject = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    
+    # Return user's recently played songs
     results = spotifyObject.current_user_recently_played(limit=50, after=None, before=None)
-
+    
+    # Convert songs into a list
     recents = results['items']
     while results['next']:
         results = spotifyObject.next(results)
         recents.extend(results['items'])
 
-    return [getSongDict(x, spotifyObject) for x in recents]
+    # Return song data as a list of dictionaries    
+    return [get_song_dict(x, spotifyObject) for x in recents]
 
 # Retrieve model predictions
 def predict():
     # REWORK: Remove the need to call this function
-    X_train, y_train = getModelValues()
+    X_train, y_train = get_model_values()
 
     # Training a linear SVM classifier
     from sklearn.svm import SVC
     svm_model_linear = SVC(kernel = 'linear', C = 1).fit(X_train, y_train)
 
     # Getting songs from user
-    songs = getUserSongs()
+    songs = get_user_songs()
 
     # Storing data in dataframe
     user_data = pd.DataFrame(songs)
