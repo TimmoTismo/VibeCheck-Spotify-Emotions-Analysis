@@ -17,16 +17,9 @@ app.secret_key = ssk
 CLIENT_ID = 'd576e9eb16044adbaa2d22688fc73dd0'
 CLIENT_SECRET = '7b5cc4d0a7ce40ee9f8c0ea42aba241b' # REWORK: Hide this
 # REDIRECT_URI = 'http://127.0.0.1:5000/api_callback' ## For Flask development server
-REDIRECT_URI = 'https://vibecheck-nnrj.onrender.com/api_callback' ## For Render
-SCOPE='user-read-recently-played user-top-read user-read-private user-read-email'
+# REDIRECT_URI = 'https://vibecheck-nnrj.onrender.com/api_callback' ## For Render
+SCOPE = 'user-read-recently-played user-top-read user-read-private user-read-email'
 SHOW_DIALOG=True # Has to be true to allow other users to logout
-
-# Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-SP_OAUTH = spotipy.oauth2.SpotifyOAuth(client_id = CLIENT_ID, 
-                                        client_secret = CLIENT_SECRET, 
-                                        redirect_uri = REDIRECT_URI, 
-                                        scope = SCOPE, 
-                                        show_dialog=SHOW_DIALOG)
 
 
 @app.route('/')
@@ -58,8 +51,18 @@ def login():
     except:
         pass
 
+    print(getRedirectURI())
+    # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
+    auth_manager = spotipy.oauth2.SpotifyOAuth(client_id = CLIENT_ID, 
+                                            client_secret = CLIENT_SECRET, 
+                                            redirect_uri = getRedirectURI(), 
+                                            scope = SCOPE, 
+                                            show_dialog=SHOW_DIALOG)
+
+    
+
     # Get User Authorisation URL for this app
-    auth_url = SP_OAUTH.get_authorize_url()
+    auth_url = auth_manager.get_authorize_url()
     #print('auth_url: ',auth_url)
 
     # Send user to Spotify authorisation page
@@ -83,8 +86,15 @@ def api_callback():
     if not code:
         return redirect('home')
 
+    # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
+    auth_manager = spotipy.oauth2.SpotifyOAuth(client_id = CLIENT_ID, 
+                                            client_secret = CLIENT_SECRET, 
+                                            redirect_uri = getRedirectURI(), 
+                                            scope = SCOPE, 
+                                            show_dialog=SHOW_DIALOG)
+
     # Add access token to sessions
-    token_info = SP_OAUTH.get_access_token(code)
+    token_info = auth_manager.get_access_token(code)
 
     # Saving the access token along with all other token related info
     session["token_info"] = token_info
@@ -153,6 +163,9 @@ def logout():
 
 
 
+def getRedirectURI():
+    return request.url_root + 'api_callback'
+
 
 # Checks to see if token is valid and gets a new token if not
 def get_token(session):
@@ -171,8 +184,13 @@ def get_token(session):
     # Refreshing token if it has expired
     if (is_token_expired):
         # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-        sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id = CLIENT_ID, client_secret = CLIENT_SECRET, redirect_uri = REDIRECT_URI, scope = SCOPE, show_dialog=SHOW_DIALOG)
-        token_info = sp_oauth.refresh_access_token(session.get('token_info').get('refresh_token'))
+        auth_manager = spotipy.oauth2.SpotifyOAuth(client_id = CLIENT_ID, 
+                                                client_secret = CLIENT_SECRET, 
+                                                redirect_uri = getRedirectURI(), 
+                                                scope = SCOPE, 
+                                                show_dialog=SHOW_DIALOG)
+        
+        token_info = auth_manager.refresh_access_token(session.get('token_info').get('refresh_token'))
 
     token_valid = True
     return token_info, token_valid
