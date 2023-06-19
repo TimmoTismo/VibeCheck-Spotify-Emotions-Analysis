@@ -51,15 +51,13 @@ def login():
     except:
         pass
 
-    print(getRedirectURI())
+    print(get_redirect_uri())
     # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-    auth_manager = spotipy.oauth2.SpotifyOAuth(client_id = CLIENT_ID, 
-                                            client_secret = CLIENT_SECRET, 
-                                            redirect_uri = getRedirectURI(), 
-                                            scope = SCOPE, 
-                                            show_dialog=SHOW_DIALOG)
-
-    
+    auth_manager = spotipy.oauth2.SpotifyOAuth(
+        client_id = CLIENT_ID, 
+        client_secret = CLIENT_SECRET, 
+        redirect_uri = get_redirect_uri(), 
+        scope = SCOPE, show_dialog=SHOW_DIALOG)    
 
     # Get User Authorisation URL for this app
     auth_url = auth_manager.get_authorize_url()
@@ -87,11 +85,11 @@ def api_callback():
         return redirect('home')
 
     # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-    auth_manager = spotipy.oauth2.SpotifyOAuth(client_id = CLIENT_ID, 
-                                            client_secret = CLIENT_SECRET, 
-                                            redirect_uri = getRedirectURI(), 
-                                            scope = SCOPE, 
-                                            show_dialog=SHOW_DIALOG)
+    auth_manager = spotipy.oauth2.SpotifyOAuth(
+        client_id = CLIENT_ID, 
+        client_secret = CLIENT_SECRET, 
+        redirect_uri = get_redirect_uri(), 
+        scope = SCOPE, show_dialog=SHOW_DIALOG)
 
     # Add access token to sessions
     token_info = auth_manager.get_access_token(code)
@@ -135,7 +133,7 @@ def results():
     valence = user_data['valence'].tolist()
     energy = user_data['energy'].tolist()
 
-    # Counting
+    # Counting labelled frequencies of each mood
     distribution = {
         'Happy' : results.tolist().count('Happy'),
         'Sad' : results.tolist().count('Sad'),
@@ -165,7 +163,8 @@ def logout():
 
 
 # Returns redirect URI depending on root URL
-def getRedirectURI():
+# This makes it so that I don't have to manually change the redirect URI everytime I switch between production and development servers
+def get_redirect_uri():
     return request.url_root + 'api_callback'
 
 
@@ -186,12 +185,12 @@ def get_token(session):
     # Refreshing token if it has expired
     if (is_token_expired):
         # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-        auth_manager = spotipy.oauth2.SpotifyOAuth(client_id = CLIENT_ID, 
-                                                client_secret = CLIENT_SECRET, 
-                                                redirect_uri = getRedirectURI(), 
-                                                scope = SCOPE, 
-                                                show_dialog=SHOW_DIALOG)
-        
+        auth_manager = spotipy.oauth2.SpotifyOAuth(
+            client_id = CLIENT_ID, 
+            client_secret = CLIENT_SECRET, 
+            redirect_uri = get_redirect_uri(), 
+            scope = SCOPE, show_dialog=SHOW_DIALOG)
+            
         token_info = auth_manager.refresh_access_token(session.get('token_info').get('refresh_token'))
 
     token_valid = True
@@ -201,7 +200,7 @@ def get_token(session):
 
 
 # Model functions
-# REWORK: Stop training model within app, instea load/save model
+# REWORK: Stop training model within app, instead save/load model from another file
 def get_model_values():
     # Read data
     data = pd.read_csv('datasets/data.csv')
