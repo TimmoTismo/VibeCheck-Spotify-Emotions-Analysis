@@ -77,22 +77,23 @@
           <div class="border-bottom">
           </div>
 
+
+          <!-- Pie Chart -->
           <div class='bg-light mb-3 pb-3'>
             <canvas class="my-4 w-100 mb-3" id="doughnutChart" width="auto" height="auto"></canvas>
           </div>
 
+          <!-- Valence Chart -->
           <div class='bg-light mb-3'>
             <canvas class="my-4 w-100 mb-3" id="valenceChart" width="900" height="380"></canvas>
           </div>
 
+          <!-- Energy Chart -->
           <div class='bg-light mb-3'>
             <canvas class="my-4 w-100 mb-3" id="energyChart" width="900" height="380"></canvas>
           </div>
 
-          <div class='bg-light mb-3'>
-            <canvas class="my-4 w-100 mb-3" id="scatterChart" width="auto" height="auto"></canvas>
-          </div>
-
+          <!-- Recently Played Table -->
           <div class="mt-5 mb-3 border-bottom">
             <h4>Recently Played</h4>
           </div>
@@ -149,7 +150,7 @@
         // Graphs
         var ch_valence = document.getElementById('valenceChart')
         var ch_energy = document.getElementById('energyChart')
-        var scatter = document.getElementById('scatterChart')
+        //var scatter = document.getElementById('scatterChart')
         var doughnut = document.getElementById('doughnutChart')
 
         // eslint-disable-next-line no-unused-vars
@@ -243,45 +244,6 @@
           }
         })
 
-        let coords = val.map( (v,i) => ({ x: v, y: energy[i] }) )
-        var scatterChart = new Chart(scatter, {
-          type: 'scatter',
-          data: {
-            datasets: [{
-            pointRadius: 4,
-            pointBackgroundColor: "rgba(0,0,255,1)",
-            data: coords
-            }]
-          },
-          options: {
-            title: {
-              display: true,
-              text: "Valence Energy Chart"
-            },
-            legend: {
-                display: false
-              },
-            scales: {
-              xAxes : [{
-                display: true,
-                scaleLabel: {
-                  display: true,
-                  labelString: 'Energy',
-                  padding: 10
-                }
-              }],
-              yAxes : [{
-                display: true,
-                scaleLabel: {
-                  display: true,
-                  labelString: 'Valence',
-                  padding: 10
-
-                }
-              }]
-            }
-          }
-        })
 
         var barColors = [
           "#FFFF2E", //yellow
