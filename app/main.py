@@ -4,6 +4,7 @@ import os, json, secrets, time
 
 from statistics import mode
 import pandas as pd
+import pickle
 
 
 
@@ -201,7 +202,7 @@ def get_token(session):
 
 # Model functions
 # REWORK: Stop training model within app, instead save/load model from another file
-def get_model_values():
+""" def get_model_values():
     # Read data
     data = pd.read_csv('datasets/data.csv')
     
@@ -224,6 +225,9 @@ def get_model_values():
     y_train = df.iloc[:, 13] 
 
     return X_train, y_train
+ """
+
+
 
 # Convert time played into date and time formats
 def convert_date_time(timestamp):
@@ -273,11 +277,14 @@ def get_user_songs():
 # Retrieve model predictions
 def predict():
     # REWORK: Remove the need to call this function
-    X_train, y_train = get_model_values()
+    # X_train, y_train = get_model_values()
 
-    # Training a linear SVM classifier
-    from sklearn.svm import SVC
-    svm_model_linear = SVC(kernel = 'linear', C = 1).fit(X_train, y_train)
+    # # Training a linear SVM classifier
+    # from sklearn.svm import SVC
+    # svm_model_linear = SVC(kernel = 'linear', C = 1).fit(X_train, y_train)
+
+    clf = pickle.load(open('models/model.sav', 'rb'))
+
 
     # Getting songs from user
     songs = get_user_songs()
@@ -296,6 +303,8 @@ def predict():
 
 
     # Predict
-    svm_predictions = svm_model_linear.predict(X_test)
-
+    # svm_predictions = svm_model_linear.predict(X_test)
+    svm_predictions = clf.predict(X_test)
+    
+    
     return svm_predictions, user_data
