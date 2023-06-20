@@ -67,29 +67,30 @@
             <h1 class="h2">Results</h1>
           </div>
 
-          <div class='results'>
-            <p>Your recent music suggests that you are feeling</p>
-            <h3>{{user_mood}}</h3>
-          </div>
-
+          <div class="flex">
+            <div class='results'>
+              <p>Your recent music suggests that you are feeling</p>
+              <h3>{{user_mood}}</h3>
+              <!-- Add extra text dynamically -->
+            </div>
+          
+            <!-- Pie Chart -->
+            <div class='bg-dark mb-3 pb-3'>
+              <canvas class="my-4 w-100 mb-3" id="doughnutChart" width="auto" height="auto"></canvas>
+            </div>
+          </div>  
 
 
           <div class="border-bottom">
           </div>
 
-
-          <!-- Pie Chart -->
-          <div class='bg-light mb-3 pb-3'>
-            <canvas class="my-4 w-100 mb-3" id="doughnutChart" width="auto" height="auto"></canvas>
-          </div>
-
           <!-- Valence Chart -->
-          <div class='bg-light mb-3'>
+          <div class='bg-dark mb-3'>
             <canvas class="my-4 w-100 mb-3" id="valenceChart" width="900" height="380"></canvas>
           </div>
 
           <!-- Energy Chart -->
-          <div class='bg-light mb-3'>
+          <div class='bg-dark mb-3'>
             <canvas class="my-4 w-100 mb-3" id="energyChart" width="900" height="380"></canvas>
           </div>
 
@@ -128,9 +129,12 @@
       </div>
     </div>
 
-    <script type="text/javascript" src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}" ></script>  
 
-    
+
+
+
+    <script type="text/javascript" src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}" ></script>  
+   
     <!-- <script src="dashboard.js"></script>
     <script src="../assets/dist/js/bootstrap.bundle.min.js"></script> -->
   
@@ -138,9 +142,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js" integrity="sha384-zNy6FEbO50N+Cg5wap8IKA4M/ZnLJgzc6w2NqACZaK0u0FXfOWRRJOnQtpZun8ha" crossorigin="anonymous"></script>
     <!-- <script type="text/javascript" src="{{ url_for('static', filename='dashboard.js') }}" ></script>   -->
 
+    <!-- Script for charts -->
     <script>
       /* globals Chart:false, feather:false */
 
+      // IIFE
       (function () {
         'use strict'
 
@@ -150,7 +156,6 @@
         // Graphs
         var ch_valence = document.getElementById('valenceChart')
         var ch_energy = document.getElementById('energyChart')
-        //var scatter = document.getElementById('scatterChart')
         var doughnut = document.getElementById('doughnutChart')
 
         // eslint-disable-next-line no-unused-vars

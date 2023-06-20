@@ -4,11 +4,16 @@ body {
   color: white;
 }
 
+.flex {
+  display:flex;
+}
+
 .results {
   margin: auto;
   width: 50%;
   padding: 50px;
   text-align: center;
+  flex: 1;
 }
 
 .feather {
@@ -17,9 +22,12 @@ body {
   vertical-align: text-bottom;
 }
 
-.bg-light, .table-responsive{
-  margin: 40px;
-  padding: 20px;
+
+
+.bg-light, .bg-dark, .table-responsive{
+  margin: 20px;
+  padding: 5px;
+  flex:2;
 }
 
 
@@ -95,6 +103,7 @@ body {
 .navbar .navbar-toggler {
   top: .25rem;
   right: 1rem;
+  margin:0px;
 }
 
 .navbar .form-control {

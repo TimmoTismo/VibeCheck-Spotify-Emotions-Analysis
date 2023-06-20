@@ -201,33 +201,6 @@ def get_token(session):
 
 
 # Model functions
-# REWORK: Stop training model within app, instead save/load model from another file
-""" def get_model_values():
-    # Read data
-    data = pd.read_csv('datasets/data.csv')
-    
-    # Pre-process the data
-
-    # Remove the index column from csv file
-    data = data.loc[:, ~data.columns.str.contains('^Unnamed')] 
-
-    # Drop unnecessary columns
-    # Note: Dropping NLP related columns
-    df = data.drop(columns=['duration_ms', 'nlp_lyrics', 'nlp_annotations', 'time_signature', 'valence+nlp'])
-
-    # Randomise rows
-    df = df.sample(frac=1).reset_index(drop=True)
-
-    # All rows, features only, no labels
-    X_train = df.iloc[:, 2:13]
-    
-    # All rows, labels only, no features 
-    y_train = df.iloc[:, 13] 
-
-    return X_train, y_train
- """
-
-
 
 # Convert time played into date and time formats
 def convert_date_time(timestamp):
@@ -257,34 +230,27 @@ def get_song_dict(x, spotify_object):
 
     return song_dict
 
- # Get user data from Spotify for model predictions
+# Get user data from Spotify for model predictions
 def get_user_songs():
     # Initiliase Spotify object for the retrieval of user data
-    spotifyObject = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    spotify_object = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
     
     # Return user's recently played songs
-    results = spotifyObject.current_user_recently_played(limit=50, after=None, before=None)
+    results = spotify_object.current_user_recently_played(limit=50, after=None, before=None)
     
     # Convert songs into a list
     recents = results['items']
     while results['next']:
-        results = spotifyObject.next(results)
+        results = spotify_object.next(results)
         recents.extend(results['items'])
 
     # Return song data as a list of dictionaries    
-    return [get_song_dict(x, spotifyObject) for x in recents]
+    return [get_song_dict(x, spotify_object) for x in recents]
 
 # Retrieve model predictions
 def predict():
-    # REWORK: Remove the need to call this function
-    # X_train, y_train = get_model_values()
-
-    # # Training a linear SVM classifier
-    # from sklearn.svm import SVC
-    # svm_model_linear = SVC(kernel = 'linear', C = 1).fit(X_train, y_train)
-
+    # Load in saved model
     clf = pickle.load(open('models/model.sav', 'rb'))
-
 
     # Getting songs from user
     songs = get_user_songs()
