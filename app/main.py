@@ -1,12 +1,13 @@
 from flask import Flask, render_template, redirect, request, session
-import spotipy 
 import os, json, secrets, time
 
 from statistics import mode
+
 import pandas as pd
 import pickle
 
-
+#from model_class import Spotify API Class created
+from app.spotify_api_class import SpotifyAPI
 
 # CONSTANTS
 app = Flask(__name__)
@@ -14,13 +15,7 @@ app = Flask(__name__)
 ssk = secrets.token_hex(16)
 app.secret_key = ssk
 
-# Spotify Constants
-CLIENT_ID = 'd576e9eb16044adbaa2d22688fc73dd0'
-CLIENT_SECRET = '7b5cc4d0a7ce40ee9f8c0ea42aba241b' # REWORK: Hide this
-# REDIRECT_URI = 'http://127.0.0.1:5000/api_callback' ## For Flask development server
-# REDIRECT_URI = 'https://vibecheck-nnrj.onrender.com/api_callback' ## For Render
-SCOPE = 'user-read-recently-played user-top-read user-read-private user-read-email'
-SHOW_DIALOG=True # Has to be true to allow other users to logout
+
 
 
 @app.route('/')
@@ -54,11 +49,7 @@ def login():
 
     print(get_redirect_uri())
     # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-    auth_manager = spotipy.oauth2.SpotifyOAuth(
-        client_id = CLIENT_ID, 
-        client_secret = CLIENT_SECRET, 
-        redirect_uri = get_redirect_uri(), 
-        scope = SCOPE, show_dialog=SHOW_DIALOG)    
+    auth_manager = SpotifyAPI(token=validate_token(session=session), redirect_uri=get_redirect_uri()).auth_manager
 
     # Get User Authorisation URL for this app
     auth_url = auth_manager.get_authorize_url()
@@ -86,11 +77,7 @@ def api_callback():
         return redirect('home')
 
     # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-    auth_manager = spotipy.oauth2.SpotifyOAuth(
-        client_id = CLIENT_ID, 
-        client_secret = CLIENT_SECRET, 
-        redirect_uri = get_redirect_uri(), 
-        scope = SCOPE, show_dialog=SHOW_DIALOG)
+    auth_manager = SpotifyAPI(token=validate_token(session=session), redirect_uri=get_redirect_uri()).auth_manager
 
     # Add access token to sessions
     token_info = auth_manager.get_access_token(code)
@@ -106,18 +93,18 @@ def loading():
     return render_template("loading.html")
 
 
-
 # authorization-code-flow Step 3.
 # Use the access token to access the Spotify Web API;
 # Spotify returns requested data
 @app.route("/results", methods=['GET', 'POST'])
 def results():
-    session['token_info'], authorized = get_token(session)
+    session['token_info'], authorized = validate_token(session)
     session.modified = True
 
     if not authorized:
         return redirect('/home')
     
+
     # Call model to predict on user's data
     results, user_data = predict()
     
@@ -170,7 +157,7 @@ def get_redirect_uri():
 
 
 # Checks to see if token is valid and gets a new token if not
-def get_token(session):
+def validate_token(session):
     token_valid = False
     token_info = session.get("token_info", {})
 
@@ -186,11 +173,7 @@ def get_token(session):
     # Refreshing token if it has expired
     if (is_token_expired):
         # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-        auth_manager = spotipy.oauth2.SpotifyOAuth(
-            client_id = CLIENT_ID, 
-            client_secret = CLIENT_SECRET, 
-            redirect_uri = get_redirect_uri(), 
-            scope = SCOPE, show_dialog=SHOW_DIALOG)
+        auth_manager = SpotifyAPI(token=validate_token(session=session), redirect_uri=get_redirect_uri()).auth_manager
             
         token_info = auth_manager.refresh_access_token(session.get('token_info').get('refresh_token'))
 
@@ -198,62 +181,18 @@ def get_token(session):
     return token_info, token_valid
 
 
-
-
-# Model functions
-
-# Convert time played into date and time formats
-def convert_date_time(timestamp):
-    date = timestamp[0:10]
-    time = timestamp[11:16]
-    return time, date
-
-# Return song as a dictionary
-def get_song_dict(x, spotify_object):
-    # Get song id, name and artist(s)
-    track_id = x['track']['id']
-    track_name = x['track']['name']
-    track_artists = x['track']['artists']
-
-    # Get features
-    features = spotify_object.audio_features(track_id)[0]
-
-    # Create song dictionary
-    song_dict = {'name' : track_name, 'artists' : [d['name'] for d in track_artists]}
-
-    # Find time song was played for chonological ordering
-    song_dict['datetime'] = convert_date_time(x['played_at']),
-
-    # Add song features to dictionary
-    for feat in features.keys():
-        song_dict[feat] = features[feat]
-
-    return song_dict
-
-# Get user data from Spotify for model predictions
-def get_user_songs():
-    # Initiliase Spotify object for the retrieval of user data
-    spotify_object = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
-    
-    # Return user's recently played songs
-    results = spotify_object.current_user_recently_played(limit=50, after=None, before=None)
-    
-    # Convert songs into a list
-    recents = results['items']
-    while results['next']:
-        results = spotify_object.next(results)
-        recents.extend(results['items'])
-
-    # Return song data as a list of dictionaries    
-    return [get_song_dict(x, spotify_object) for x in recents]
-
 # Retrieve model predictions
 def predict():
     # Load in saved model
     clf = pickle.load(open('models/model.sav', 'rb'))
 
+
+    #Initialise
+    sp_api = SpotifyAPI(token=session.get('token_info').get('access_token'), 
+                        redirect_uri=get_redirect_uri())
+    
     # Getting songs from user
-    songs = get_user_songs()
+    songs = sp_api.get_user_songs()
 
     # Storing data in dataframe
     user_data = pd.DataFrame(songs)
