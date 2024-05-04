@@ -2,23 +2,22 @@ import spotipy
 
 class SpotifyAPI:
 
-    def __init__(self, token, redirect_uri) -> None:
-        # Initiliase Spotify object for the retrieval of user data
-        self.spotify_object = spotipy.Spotify(auth=token)
+    def __init__(self, token=None, redirect_uri=None) -> None:
+        # Initialise Spotify object for the retrieval of user data
+        self.spotify_object = spotipy.Spotify(auth=token) if token else None
         self.client_id = 'd576e9eb16044adbaa2d22688fc73dd0'
-        self.client_secret = '7b5cc4d0a7ce40ee9f8c0ea42aba241b'
         self.scope = 'user-read-recently-played user-top-read user-read-private user-read-email'
-        self.show_dialogue=True # Has to be true to allow other users to logout
+        self.open_browser=True # Has to be true to allow other users to logout
         self.auth_manager = self.get_auth_manager(redirect_uri=redirect_uri)
 
 
-    def get_auth_manager(self, redirect_uri):
-        return spotipy.oauth2.SpotifyOAuth(
+    def get_auth_manager(self, redirect_uri, client_id=None):
+        # Suppose to use the PKCE package but not really sure
+        return spotipy.oauth2.SpotifyPKCE(
                     client_id = self.client_id, 
-                    client_secret = self.client_secret, 
                     redirect_uri = redirect_uri, 
                     scope = self.scope, 
-                    show_dialog=self.show_dialogue) 
+                    open_browser=self.open_browser) 
 
 
     # Convert time played into date and time formats

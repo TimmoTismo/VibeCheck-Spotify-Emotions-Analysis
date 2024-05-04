@@ -49,7 +49,8 @@ def login():
 
     print(get_redirect_uri())
     # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-    auth_manager = SpotifyAPI(token=validate_token(session=session), redirect_uri=get_redirect_uri()).auth_manager
+    auth_manager = SpotifyAPI(redirect_uri=get_redirect_uri()).auth_manager
+
 
     # Get User Authorisation URL for this app
     auth_url = auth_manager.get_authorize_url()
@@ -70,14 +71,14 @@ def api_callback():
 
     # Retrieve response code from URL
     code = request.args.get('code')
-    # print('code: ', code)
+    #print('code: ', code)
 
     # If user clicks 'Cancel'
     if not code:
         return redirect('home')
 
     # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-    auth_manager = SpotifyAPI(token=validate_token(session=session), redirect_uri=get_redirect_uri()).auth_manager
+    auth_manager = SpotifyAPI(redirect_uri=get_redirect_uri()).auth_manager
 
     # Add access token to sessions
     token_info = auth_manager.get_access_token(code)
@@ -117,7 +118,7 @@ def results():
     # print(json.dumps(response))
     # user_data returns a dataframe
 
-    ## REWORK: Add more graphs
+    ## TODO: Add more graphs
     valence = user_data['valence'].tolist()
     energy = user_data['energy'].tolist()
 
@@ -170,15 +171,20 @@ def validate_token(session):
     now = int(time.time())
     is_token_expired = session.get('token_info').get('expires_at') - now < 60
 
+
     # Refreshing token if it has expired
     if (is_token_expired):
         # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-        auth_manager = SpotifyAPI(token=validate_token(session=session), redirect_uri=get_redirect_uri()).auth_manager
+        
+        auth_manager = SpotifyAPI(redirect_uri=get_redirect_uri()).auth_manager
             
         token_info = auth_manager.refresh_access_token(session.get('token_info').get('refresh_token'))
 
     token_valid = True
     return token_info, token_valid
+
+
+
 
 
 # Retrieve model predictions
