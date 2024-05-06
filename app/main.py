@@ -9,6 +9,8 @@ import pickle
 #from model_class import Spotify API Class created
 from app.spotify_api_class import SpotifyAPI
 
+from spotipy.oauth2 import SpotifyPKCE
+
 # CONSTANTS
 app = Flask(__name__)
 
@@ -40,14 +42,6 @@ def error():
 # the user logs in and authorizes access
 @app.route("/login")
 def login():
-    try:
-        # Remove the CACHE file (.cache-test) so that a new user can authorize.
-        os.remove('.cache')
-        session.clear()
-    except:
-        pass
-
-    print(get_redirect_uri())
     # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
     auth_manager = SpotifyAPI(redirect_uri=get_redirect_uri()).auth_manager
 
@@ -67,7 +61,7 @@ def login():
 @app.route("/api_callback")
 def api_callback():
     # Not sure if this is needed
-    session.clear()
+    #session.clear()
 
     # Retrieve response code from URL
     code = request.args.get('code')
@@ -77,8 +71,13 @@ def api_callback():
     if not code:
         return redirect('home')
 
+
     # Don't reuse a SpotifyOAuth object because they store token info and you could leak user tokens if you reuse a SpotifyOAuth object
-    auth_manager = SpotifyAPI(redirect_uri=get_redirect_uri()).auth_manager
+    auth_manager = SpotifyPKCE(client_id='d576e9eb16044adbaa2d22688fc73dd0', 
+                               redirect_uri=get_redirect_uri(), 
+                               scope='user-read-recently-played user-top-read user-read-private user-read-email')
+
+    #print(auth_manager.get_authorization_code(request.url))
 
     # Add access token to sessions
     token_info = auth_manager.get_access_token(code)

@@ -7,11 +7,11 @@ class SpotifyAPI:
         self.spotify_object = spotipy.Spotify(auth=token) if token else None
         self.client_id = 'd576e9eb16044adbaa2d22688fc73dd0'
         self.scope = 'user-read-recently-played user-top-read user-read-private user-read-email'
-        self.open_browser=True # Has to be true to allow other users to logout
+        self.open_browser=False # Has to be true to allow other users to logout
         self.auth_manager = self.get_auth_manager(redirect_uri=redirect_uri)
 
 
-    def get_auth_manager(self, redirect_uri, client_id=None):
+    def get_auth_manager(self, redirect_uri=None, client_id=None):
         # Suppose to use the PKCE package but not really sure
         return spotipy.oauth2.SpotifyPKCE(
                     client_id = self.client_id, 
